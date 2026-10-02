@@ -671,11 +671,11 @@
             document.querySelectorAll('.campo-invalido').forEach(el => el.classList.remove('campo-invalido'));
         }
 
-        function rolarCampoParaTopo(el) {
+        function rolarCampoParaCentro(el) {
             if (!el || !el.getBoundingClientRect) return;
             const rect = el.getBoundingClientRect();
-            const topo = rect.top + window.pageYOffset - 80;
-            window.scrollTo({ top: Math.max(0, topo), behavior: 'smooth' });
+            const meio = rect.top + window.pageYOffset - (window.innerHeight / 2) + (rect.height / 2);
+            window.scrollTo({ top: Math.max(0, meio), behavior: 'smooth' });
         }
 
         function focarNoCampo(el) {
@@ -686,7 +686,7 @@
 
         function focarCampoInvalido(el) {
             el.classList.add('campo-invalido');
-            rolarCampoParaTopo(el);
+            rolarCampoParaCentro(el);
             setTimeout(() => { focarNoCampo(el); }, 80);
         }
 
@@ -906,6 +906,19 @@
             `).join('');
         }
 
+                function avisarDownloadEAtualizar() {
+            Swal.fire({
+                icon: 'success',
+                title: 'DOWNLOAD INICIADO!',
+                html: '<span class="text-amber-500 font-bold" style="color:#f59e0b;font-weight:bold;">ATENÇÃO:</span> O PDF ESTÁ SENDO BAIXADO. A PÁGINA SERÁ ATUALIZADA.',
+                timer: 1500,
+                timerProgressBar: true,
+                showConfirmButton: false,
+                allowOutsideClick: false,
+                allowEscapeKey: false
+            }).then(() => { window.location.reload(); });
+        }
+
         function baixarPDFHistorico(id) {
             const h = JSON.parse(localStorage.getItem('historico_pdfs_interdicao')) || [];
             const p = h.find(i => String(i.id) === String(id));
@@ -918,6 +931,7 @@
                 a.download = p.nome || 'TERMO_DE_INTERDICAO.pdf';
                 document.body.appendChild(a);
                 a.click();
+                avisarDownloadEAtualizar();
                 document.body.removeChild(a);
                 setTimeout(() => URL.revokeObjectURL(url), 4000);
             } catch (e) {

@@ -725,11 +725,11 @@ function isCanvasEmpty(canvasId) {
     return true;
 }
 
-function rolarCampoParaTopo(el) {
+function rolarCampoParaCentro(el) {
     if (!el || !el.getBoundingClientRect) return;
     const rect = el.getBoundingClientRect();
-    const topo = rect.top + window.pageYOffset - 80;
-    window.scrollTo({ top: Math.max(0, topo), behavior: 'smooth' });
+    const meio = rect.top + window.pageYOffset - (window.innerHeight / 2) + (rect.height / 2);
+    window.scrollTo({ top: Math.max(0, meio), behavior: 'smooth' });
 }
 
 function focarNoCampo(el) {
@@ -747,7 +747,7 @@ function mostrarAlertaAviso(titulo, mensagemHTML, elementoParaFocar) {
             elementoAlvo = elementoParaFocar.closest('.bloco-assinatura') || elementoParaFocar;
         }
         elementoAlvo.classList.add('ring-4', 'ring-red-600', 'transition-all', 'duration-300');
-        rolarCampoParaTopo(elementoAlvo);
+        rolarCampoParaCentro(elementoAlvo);
     }
 
     Swal.fire({
@@ -764,7 +764,7 @@ function mostrarAlertaAviso(titulo, mensagemHTML, elementoParaFocar) {
         didClose: () => {
             if (elementoParaFocar) {
                 setTimeout(() => {
-                    rolarCampoParaTopo(elementoAlvo);
+                    rolarCampoParaCentro(elementoAlvo);
                     focarNoCampo(elementoParaFocar);
                 }, 50);
                 setTimeout(() => {
@@ -1005,6 +1005,19 @@ function abrirPDF(id) {
     }
 }
 
+function avisarDownloadEAtualizar() {
+    Swal.fire({
+        icon: 'success',
+        title: 'DOWNLOAD INICIADO!',
+        html: '<span class="text-amber-500 font-bold" style="color:#f59e0b;font-weight:bold;">ATENÇÃO:</span> O PDF ESTÁ SENDO BAIXADO. A PÁGINA SERÁ ATUALIZADA.',
+        timer: 1500,
+        timerProgressBar: true,
+        showConfirmButton: false,
+        allowOutsideClick: false,
+        allowEscapeKey: false
+    }).then(() => { window.location.reload(); });
+}
+
 function baixarPDFHistorico(id) {
     const historico = JSON.parse(localStorage.getItem('historico_pdfs_moto')) || [];
     const pdfObj = historico.find(item => String(item.id) === String(id));
@@ -1023,6 +1036,7 @@ function baixarPDFHistorico(id) {
     link.download = pdfObj.nome || 'rastreabilidade-moto.pdf';
     document.body.appendChild(link);
     link.click();
+    avisarDownloadEAtualizar();
     document.body.removeChild(link);
 }
 

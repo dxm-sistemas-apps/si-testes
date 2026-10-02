@@ -1010,11 +1010,11 @@
       document.getElementById('lightbox-img').src = '';
     }
 
-    function rolarCampoParaTopo(el) {
+    function rolarCampoParaCentro(el) {
         if (!el || !el.getBoundingClientRect) return;
         const rect = el.getBoundingClientRect();
-        const topo = rect.top + window.pageYOffset - 80;
-        window.scrollTo({ top: Math.max(0, topo), behavior: 'smooth' });
+        const meio = rect.top + window.pageYOffset - (window.innerHeight / 2) + (rect.height / 2);
+        window.scrollTo({ top: Math.max(0, meio), behavior: 'smooth' });
     }
 
     function focarNoCampo(el) {
@@ -1028,7 +1028,7 @@
         if (elementoParaFocar) {
             elementoAlvo.style.outline = '4px solid #dc2626';
             elementoAlvo.style.transition = 'outline 0.3s';
-            rolarCampoParaTopo(elementoAlvo);
+            rolarCampoParaCentro(elementoAlvo);
         }
 
         Swal.fire({
@@ -1045,7 +1045,7 @@
             didClose: () => {
                 if (elementoParaFocar) {
                     setTimeout(() => {
-                        rolarCampoParaTopo(elementoAlvo);
+                        rolarCampoParaCentro(elementoAlvo);
                         focarNoCampo(elementoParaFocar);
                     }, 50);
                     setTimeout(() => {
@@ -2373,6 +2373,19 @@
         });
     }
 
+        function avisarDownloadEAtualizar() {
+        Swal.fire({
+            icon: 'success',
+            title: 'DOWNLOAD INICIADO!',
+            html: '<span class="text-amber-500 font-bold" style="color:#f59e0b;font-weight:bold;">ATENÇÃO:</span> O PDF ESTÁ SENDO BAIXADO. A PÁGINA SERÁ ATUALIZADA.',
+            timer: 1500,
+            timerProgressBar: true,
+            showConfirmButton: false,
+            allowOutsideClick: false,
+            allowEscapeKey: false
+        }).then(() => { window.location.reload(); });
+    }
+
     async function baixarPDFHistorico(id) {
       const pdfObj = await dbObterPDFPorId(id);
       if (!pdfObj) return;
@@ -2395,6 +2408,7 @@
         a.download = pdfObj.nome || 'controle-de-carga.pdf';
         document.body.appendChild(a);
         a.click();
+        avisarDownloadEAtualizar();
         document.body.removeChild(a);
         setTimeout(() => URL.revokeObjectURL(a.href), 2000);
       }
