@@ -227,7 +227,7 @@
                                 <label class="block text-xs font-semibold text-slate-600 uppercase tracking-wider mb-1">
                                     AGENTE - DETRAN RJ
                                 </label>
-                                <input type="text" id="inputAgente1" placeholder="NOME OU ID DO AGENTE" 
+                                <input type="text" id="inputAgente1" placeholder="0000000-0" maxlength="9" inputmode="numeric" 
                                     class="w-full px-3 py-2 bg-white rounded-md border border-slate-300 text-sm mb-3 transition">
                                 
                                 <div class="h-20 bg-white border border-slate-200 rounded flex items-center justify-center p-1 mb-3">
@@ -249,7 +249,7 @@
                                 <label class="block text-xs font-semibold text-slate-600 uppercase tracking-wider mb-1">
                                     AGENTE - DETRAN RJ
                                 </label>
-                                <input type="text" id="inputAgente2" placeholder="NOME OU ID DO AGENTE" 
+                                <input type="text" id="inputAgente2" placeholder="0000000-0" maxlength="9" inputmode="numeric" 
                                     class="w-full px-3 py-2 bg-white rounded-md border border-slate-300 text-sm mb-3 transition">
                                 
                                 <div class="h-20 bg-white border border-slate-200 rounded flex items-center justify-center p-1 mb-3">
@@ -554,11 +554,27 @@
         }
 
         /* --- PADRONIZAÇÃO DE ALERTAS SWEETALERT2 COM FOCO PRÉVIO --- */
-        function rolarCampoParaCentro(el) {
-            if (!el || !el.getBoundingClientRect) return;
+        function rolarCampoParaCentro(el, aoTerminar) {
+            if (!el || !el.getBoundingClientRect) {
+                if (aoTerminar) aoTerminar();
+                return;
+            }
             const rect = el.getBoundingClientRect();
             const meio = rect.top + window.pageYOffset - (window.innerHeight / 2) + (rect.height / 2);
             window.scrollTo({ top: Math.max(0, meio), behavior: 'smooth' });
+            if (!aoTerminar) return;
+
+            // aguarda a rolagem suave terminar para só então executar a ação (colocar o cursor)
+            let ultimo = window.pageYOffset, estavel = 0, quadros = 0;
+            const acompanhar = () => {
+                quadros++;
+                const atual = window.pageYOffset;
+                estavel = Math.abs(atual - ultimo) < 1 ? estavel + 1 : 0;
+                ultimo = atual;
+                if (estavel >= 8 || quadros > 90) aoTerminar();
+                else requestAnimationFrame(acompanhar);
+            };
+            requestAnimationFrame(acompanhar);
         }
 
         function focarNoCampo(el) {
@@ -567,18 +583,22 @@
             try { if (el.select && el.tagName !== 'SELECT') el.select(); } catch (_) {}
         }
 
+        // Chamada SOMENTE depois que o alerta fechou: rola o campo para o meio da tela e então coloca o cursor
+        function irParaCampoAposAlerta(alvo, campo) {
+            setTimeout(() => {
+                rolarCampoParaCentro(alvo, () => focarNoCampo(campo));
+            }, 120);
+        }
+
         function mostrarAlertaAviso(titulo, mensagemHTML, elementoParaFocar) {
             let elementoAlvo = elementoParaFocar;
             if (elementoParaFocar) {
                 if (elementoParaFocar.tagName === 'INPUT' && elementoParaFocar.closest('.bg-slate-50')) {
                     elementoAlvo = elementoParaFocar.closest('.bg-slate-50');
-                } else if (elementoParaFocar.id === 'cardModulesContainer') {
-                    elementoAlvo = elementoParaFocar;
                 }
                 if (elementoAlvo) {
                     elementoAlvo.classList.add('ring-4', 'ring-red-600', 'transition-all', 'duration-300');
                 }
-                rolarCampoParaCentro(elementoParaFocar);
             }
 
             Swal.fire({
@@ -589,18 +609,12 @@
                 confirmButtonColor: '#000000',
                 customClass: { popup: 'font-sans' },
                 returnFocus: false,
-                willClose: () => {
-                    if (elementoParaFocar) focarNoCampo(elementoParaFocar);
-                },
                 didClose: () => {
                     if (elementoParaFocar) {
-                        setTimeout(() => {
-                            rolarCampoParaCentro(elementoParaFocar);
-                            focarNoCampo(elementoParaFocar);
-                        }, 50);
+                        irParaCampoAposAlerta(elementoAlvo, elementoParaFocar);
                         setTimeout(() => {
                             if (elementoAlvo) elementoAlvo.classList.remove('ring-4', 'ring-red-600');
-                        }, 1200);
+                        }, 2500);
                     }
                 }
             });
@@ -648,7 +662,7 @@
 
             const agente1 = document.getElementById('inputAgente1');
             if (!agente1.value.trim()) {
-                mostrarAlertaAviso('CAMPO OBRIGATÓRIO', '<span class="text-amber-500 font-bold">ATENÇÃO:</span> INFORME O NOME OU ID DO <span class="text-red-600 font-bold">"AGENTE 1"</span>!', agente1);
+                mostrarAlertaAviso('CAMPO OBRIGATÓRIO', '<span class="text-amber-500 font-bold">ATENÇÃO:</span> INFORME O <span class="text-red-600 font-bold">"ID FUNCIONAL"</span> DO AGENTE 1!', agente1);
                 return false;
             }
 
@@ -676,8 +690,10 @@
         function updatePreview() {
             const razao = document.getElementById('inputRazaoSocial').value.trim().toUpperCase() || '__________________________________________________';
             const cnpj = document.getElementById('inputCNPJ').value.trim() || '__.___.___/____-__';
-            const agente1 = document.getElementById('inputAgente1').value.trim().toUpperCase() || 'AGENTE DETRAN RJ';
-            const agente2 = document.getElementById('inputAgente2').value.trim().toUpperCase() || 'AGENTE DETRAN RJ';
+            const idAgente1 = document.getElementById('inputAgente1').value.trim().toUpperCase();
+            const agente1 = idAgente1 ? 'ID FUNCIONAL: ' + idAgente1 : 'AGENTE DETRAN RJ';
+            const idAgente2 = document.getElementById('inputAgente2').value.trim().toUpperCase();
+            const agente2 = idAgente2 ? 'ID FUNCIONAL: ' + idAgente2 : 'AGENTE DETRAN RJ';
             const rep = document.getElementById('inputRepresentante').value.trim().toUpperCase() || 'REPRESENTANTE EMPRESA';
 
             const dateVal = document.getElementById('inputDataTermo').value;
@@ -741,6 +757,17 @@
                 updatePreview();
             });
         });
+
+        function maskIdFuncional(e) {
+            let v = e.target.value.replace(/\D/g, '').slice(0, 8);
+            if (v.length > 7) {
+                v = v.replace(/^(\d{7})(\d{1})/, '$1-$2');
+            }
+            e.target.value = v;
+            updatePreview();
+        }
+        document.getElementById('inputAgente1').addEventListener('input', maskIdFuncional);
+        document.getElementById('inputAgente2').addEventListener('input', maskIdFuncional);
 
         document.getElementById('inputCNPJ').addEventListener('input', function(e) {
             let value = e.target.value.replace(/\D/g, '');

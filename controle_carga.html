@@ -1010,11 +1010,27 @@
       document.getElementById('lightbox-img').src = '';
     }
 
-    function rolarCampoParaCentro(el) {
-        if (!el || !el.getBoundingClientRect) return;
+    function rolarCampoParaCentro(el, aoTerminar) {
+        if (!el || !el.getBoundingClientRect) {
+            if (aoTerminar) aoTerminar();
+            return;
+        }
         const rect = el.getBoundingClientRect();
         const meio = rect.top + window.pageYOffset - (window.innerHeight / 2) + (rect.height / 2);
         window.scrollTo({ top: Math.max(0, meio), behavior: 'smooth' });
+        if (!aoTerminar) return;
+
+        // aguarda a rolagem suave terminar para só então executar a ação (colocar o cursor)
+        let ultimo = window.pageYOffset, estavel = 0, quadros = 0;
+        const acompanhar = () => {
+            quadros++;
+            const atual = window.pageYOffset;
+            estavel = Math.abs(atual - ultimo) < 1 ? estavel + 1 : 0;
+            ultimo = atual;
+            if (estavel >= 8 || quadros > 90) aoTerminar();
+            else requestAnimationFrame(acompanhar);
+        };
+        requestAnimationFrame(acompanhar);
     }
 
     function focarNoCampo(el) {
@@ -1023,12 +1039,18 @@
         try { if (el.select && el.tagName !== 'SELECT') el.select(); } catch (_) {}
     }
 
+    // Chamada SOMENTE depois que o alerta fechou: rola o campo para o meio da tela e então coloca o cursor
+    function irParaCampoAposAlerta(alvo, campo) {
+        setTimeout(() => {
+            rolarCampoParaCentro(alvo, () => focarNoCampo(campo));
+        }, 120);
+    }
+
     function mostrarAlertaAviso(titulo, mensagemHTML, elementoParaFocar) {
         const elementoAlvo = elementoParaFocar;
         if (elementoParaFocar) {
             elementoAlvo.style.outline = '4px solid #dc2626';
             elementoAlvo.style.transition = 'outline 0.3s';
-            rolarCampoParaCentro(elementoAlvo);
         }
 
         Swal.fire({
@@ -1039,18 +1061,12 @@
             confirmButtonColor: '#000000',
             customClass: { popup: 'font-sans' },
             returnFocus: false,
-            willClose: () => {
-                if (elementoParaFocar) focarNoCampo(elementoParaFocar);
-            },
             didClose: () => {
                 if (elementoParaFocar) {
-                    setTimeout(() => {
-                        rolarCampoParaCentro(elementoAlvo);
-                        focarNoCampo(elementoParaFocar);
-                    }, 50);
+                    irParaCampoAposAlerta(elementoAlvo, elementoParaFocar);
                     setTimeout(() => {
                         if (elementoAlvo) elementoAlvo.style.outline = 'none';
-                    }, 1200);
+                    }, 2500);
                 }
             }
         });
@@ -1362,7 +1378,7 @@
       if (!chegada) { mostrarAlertaAviso('CAMPO OBRIGATÓRIO', '<span style="color:#f59e0b; font-weight:bold;">ATENÇÃO:</span> INFORME O <span style="color:#dc2626; font-weight:bold;">"HORÁRIO DE CHEGADA"</span>!', elChegada); return; }
       if (!inicio) { mostrarAlertaAviso('CAMPO OBRIGATÓRIO', '<span style="color:#f59e0b; font-weight:bold;">ATENÇÃO:</span> INFORME O <span style="color:#dc2626; font-weight:bold;">"INÍCIO DO RECOLHIMENTO"</span>!', elInicio); return; }
       if (!termino) { mostrarAlertaAviso('CAMPO OBRIGATÓRIO', '<span style="color:#f59e0b; font-weight:bold;">ATENÇÃO:</span> INFORME O <span style="color:#dc2626; font-weight:bold;">"TÉRMINO DO RECOLHIMENTO"</span>!', elTermino); return; }
-      if (currentImages.length === 0) { mostrarAlertaAviso('IMAGENS FALTANDO', '<span style="color:#f59e0b; font-weight:bold;">ATENÇÃO:</span> ADICIONE AO MENOS <span style="color:#dc2626; font-weight:bold;">1 IMAGEM</span> DA CARGA / VEÍCULO!'); return; }
+      if (currentImages.length === 0) { mostrarAlertaAviso('IMAGENS FALTANDO', '<span style="color:#f59e0b; font-weight:bold;">ATENÇÃO:</span> ADICIONE AO MENOS <span style="color:#dc2626; font-weight:bold;">1 IMAGEM</span> DA CARGA / VEÍCULO!', document.getElementById('preview-container').parentElement); return; }
 
       const objRec = recicladoras.find(r => r.id === recId);
       const objVeic = tiposVeiculos.find(v => v.id === veicId);
@@ -1571,7 +1587,7 @@
       }
 
       if (registros.length === 0) {
-        mostrarAlertaAviso('NENHUMA CARGA', '<span style="color:#f59e0b; font-weight:bold;">ATENÇÃO:</span> CADASTRE AO MENOS UMA CARGA ANTES DE SALVAR O RELATÓRIO PARCIAL.');
+        mostrarAlertaAviso('NENHUMA CARGA', '<span style="color:#f59e0b; font-weight:bold;">ATENÇÃO:</span> CADASTRE AO MENOS UMA CARGA ANTES DE SALVAR O RELATÓRIO PARCIAL.', document.getElementById('form-card'));
         return;
       }
 

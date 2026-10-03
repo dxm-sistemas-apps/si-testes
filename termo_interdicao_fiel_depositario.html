@@ -671,11 +671,27 @@
             document.querySelectorAll('.campo-invalido').forEach(el => el.classList.remove('campo-invalido'));
         }
 
-        function rolarCampoParaCentro(el) {
-            if (!el || !el.getBoundingClientRect) return;
+        function rolarCampoParaCentro(el, aoTerminar) {
+            if (!el || !el.getBoundingClientRect) {
+                if (aoTerminar) aoTerminar();
+                return;
+            }
             const rect = el.getBoundingClientRect();
             const meio = rect.top + window.pageYOffset - (window.innerHeight / 2) + (rect.height / 2);
             window.scrollTo({ top: Math.max(0, meio), behavior: 'smooth' });
+            if (!aoTerminar) return;
+
+            // aguarda a rolagem suave terminar para só então executar a ação (colocar o cursor)
+            let ultimo = window.pageYOffset, estavel = 0, quadros = 0;
+            const acompanhar = () => {
+                quadros++;
+                const atual = window.pageYOffset;
+                estavel = Math.abs(atual - ultimo) < 1 ? estavel + 1 : 0;
+                ultimo = atual;
+                if (estavel >= 8 || quadros > 90) aoTerminar();
+                else requestAnimationFrame(acompanhar);
+            };
+            requestAnimationFrame(acompanhar);
         }
 
         function focarNoCampo(el) {
@@ -684,10 +700,16 @@
             try { if (el.select && el.tagName !== 'SELECT') el.select(); } catch (_) {}
         }
 
+        // Chamada SOMENTE depois que o alerta fechou: rola o campo para o meio da tela e então coloca o cursor
+        function irParaCampoAposAlerta(alvo, campo) {
+            setTimeout(() => {
+                rolarCampoParaCentro(alvo, () => focarNoCampo(campo));
+            }, 120);
+        }
+
         function focarCampoInvalido(el) {
             el.classList.add('campo-invalido');
-            rolarCampoParaCentro(el);
-            setTimeout(() => { focarNoCampo(el); }, 80);
+            irParaCampoAposAlerta(el, el);
         }
 
         function validateForm() {
@@ -700,25 +722,41 @@
                     Swal.fire({
                         icon: 'warning',
                         title: 'CAMPO OBRIGATÓRIO',
-                        text: `PREENCHA O CAMPO: ${campo.label.toUpperCase()}`
-                    }).then(() => focarCampoInvalido(el));
+                        text: `PREENCHA O CAMPO: ${campo.label.toUpperCase()}`,
+                        returnFocus: false,
+                        didClose: () => focarCampoInvalido(el)
+                    });
                     return false;
                 }
             }
 
             if (!signatures.Agente) {
+                const boxSig = document.getElementById('boxAgente');
+                if (boxSig) boxSig.classList.add('campo-invalido');
                 Swal.fire({
                     icon: 'warning',
                     title: 'ASSINATURA OBRIGATÓRIA',
-                    text: 'A ASSINATURA DO AGENTE PÚBLICO É OBRIGATÓRIA!'
+                    text: 'A ASSINATURA DO AGENTE PÚBLICO É OBRIGATÓRIA!',
+                    returnFocus: false,
+                    didClose: () => {
+                        irParaCampoAposAlerta(boxSig, null);
+                        setTimeout(() => { if (boxSig) boxSig.classList.remove('campo-invalido'); }, 2500);
+                    }
                 });
                 return false;
             }
             if (!signatures.Proprietario) {
+                const boxSig = document.getElementById('boxProprietario');
+                if (boxSig) boxSig.classList.add('campo-invalido');
                 Swal.fire({
                     icon: 'warning',
                     title: 'ASSINATURA OBRIGATÓRIA',
-                    text: 'A ASSINATURA DO FIEL DEPOSITÁRIO É OBRIGATÓRIA!'
+                    text: 'A ASSINATURA DO FIEL DEPOSITÁRIO É OBRIGATÓRIA!',
+                    returnFocus: false,
+                    didClose: () => {
+                        irParaCampoAposAlerta(boxSig, null);
+                        setTimeout(() => { if (boxSig) boxSig.classList.remove('campo-invalido'); }, 2500);
+                    }
                 });
                 return false;
             }

@@ -567,7 +567,6 @@ function encerrarContagemAgregados() {
     if (!temDados) {
         const container = document.getElementById('container-agregados');
         if (container) {
-            container.scrollIntoView({ behavior: 'smooth', block: 'center' });
             container.classList.add('ring-4', 'ring-red-600', 'transition-all');
         }
         Swal.fire({
@@ -575,14 +574,11 @@ function encerrarContagemAgregados() {
             title: 'NENHUM ITEM COMPLETO ENCONTRADO!',
             html: '<span class="text-amber-500 font-bold">ATENÇÃO:</span> INSIRA O VALOR NO CAMPO DA <span class="text-red-600 font-bold">"CONTAGEM DINÂMICA DE ITENS COMPLETOS"</span> PARA ADICIONÁ-LO À TABELA!',
             confirmButtonColor: '#000000',
+            returnFocus: false,
             didClose: () => {
                 if (container) {
-                    const primeiroInput = container.querySelector('input');
-                    if (primeiroInput) {
-                        primeiroInput.focus();
-                        primeiroInput.select();
-                    }
-                    setTimeout(() => { container.classList.remove('ring-4', 'ring-red-600'); }, 1500);
+                    irParaCampoAposAlerta(container, container.querySelector('input'));
+                    setTimeout(() => { container.classList.remove('ring-4', 'ring-red-600'); }, 2500);
                 }
             }
         });
@@ -741,17 +737,40 @@ function isCanvasEmpty(canvasId) {
     return true;
 }
 
-function rolarCampoParaCentro(el) {
-    if (!el || !el.getBoundingClientRect) return;
+function rolarCampoParaCentro(el, aoTerminar) {
+    if (!el || !el.getBoundingClientRect) {
+        if (aoTerminar) aoTerminar();
+        return;
+    }
     const rect = el.getBoundingClientRect();
     const meio = rect.top + window.pageYOffset - (window.innerHeight / 2) + (rect.height / 2);
     window.scrollTo({ top: Math.max(0, meio), behavior: 'smooth' });
+    if (!aoTerminar) return;
+
+    // aguarda a rolagem suave terminar para só então executar a ação (colocar o cursor)
+    let ultimo = window.pageYOffset, estavel = 0, quadros = 0;
+    const acompanhar = () => {
+        quadros++;
+        const atual = window.pageYOffset;
+        estavel = Math.abs(atual - ultimo) < 1 ? estavel + 1 : 0;
+        ultimo = atual;
+        if (estavel >= 8 || quadros > 90) aoTerminar();
+        else requestAnimationFrame(acompanhar);
+    };
+    requestAnimationFrame(acompanhar);
 }
 
 function focarNoCampo(el) {
     if (!el || !el.focus) return;
     try { el.focus({ preventScroll: true }); } catch (_) { el.focus(); }
     try { if (el.select && el.tagName !== 'SELECT') el.select(); } catch (_) {}
+}
+
+// Chamada SOMENTE depois que o alerta fechou: rola o campo para o meio da tela e então coloca o cursor
+function irParaCampoAposAlerta(alvo, campo) {
+    setTimeout(() => {
+        rolarCampoParaCentro(alvo, () => focarNoCampo(campo));
+    }, 120);
 }
 
 function mostrarAlertaAviso(titulo, mensagemHTML, elementoParaFocar) {
@@ -763,7 +782,6 @@ function mostrarAlertaAviso(titulo, mensagemHTML, elementoParaFocar) {
             elementoAlvo = elementoParaFocar.closest('.bloco-assinatura') || elementoParaFocar;
         }
         elementoAlvo.classList.add('ring-4', 'ring-red-600', 'transition-all', 'duration-300');
-        rolarCampoParaCentro(elementoAlvo);
     }
 
     Swal.fire({
@@ -774,18 +792,12 @@ function mostrarAlertaAviso(titulo, mensagemHTML, elementoParaFocar) {
         confirmButtonColor: '#000000',
         customClass: { popup: 'font-sans' },
         returnFocus: false,
-        willClose: () => {
-            if (elementoParaFocar) focarNoCampo(elementoParaFocar);
-        },
         didClose: () => {
             if (elementoParaFocar) {
-                setTimeout(() => {
-                    rolarCampoParaCentro(elementoAlvo);
-                    focarNoCampo(elementoParaFocar);
-                }, 50);
+                irParaCampoAposAlerta(elementoAlvo, elementoParaFocar);
                 setTimeout(() => {
                     if (elementoAlvo) elementoAlvo.classList.remove('ring-4', 'ring-red-600');
-                }, 1200);
+                }, 2500);
             }
         }
     });
@@ -829,19 +841,18 @@ function validarFormulario(acaoSucesso = null) {
     if (verificarDadosPendentesAgregados()) {
         const btnAgregados = document.getElementById('btn-processar-agregados');
         if (btnAgregados) {
-            btnAgregados.scrollIntoView({ behavior: 'smooth', block: 'center' });
             btnAgregados.classList.add('ring-4', 'ring-red-600');
-            btnAgregados.focus();
         }
         Swal.fire({
             icon: 'error',
             title: 'VALORES DE ITENS COMPLETOS NÃO ADICIONADOS À TABELA',
             html: '<span class="text-amber-500 font-bold">ATENÇÃO:</span> HÁ VALORES NA <span class="text-red-600 font-bold">"CONTAGEM DINÂMICA DE ITENS COMPLETOS"</span> QUE NÃO FORAM ADICIONADOS À TABELA!<br><br>CLIQUE NO BOTÃO <span class="text-red-600 font-bold">"ADICIONAR ITENS COMPLETOS"</span> PARA PROSSEGUIR!',
             confirmButtonColor: '#000000',
+            returnFocus: false,
             didClose: () => {
                 if (btnAgregados) {
-                    btnAgregados.focus();
-                    setTimeout(() => { btnAgregados.classList.remove('ring-4', 'ring-red-600'); }, 1200);
+                    irParaCampoAposAlerta(btnAgregados, btnAgregados);
+                    setTimeout(() => { btnAgregados.classList.remove('ring-4', 'ring-red-600'); }, 2500);
                 }
             }
         });

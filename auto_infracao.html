@@ -878,11 +878,27 @@
             if (grupo) grupo.classList.remove('grupo-invalido');
         }
 
-        function rolarCampoParaCentro(el) {
-            if (!el || !el.getBoundingClientRect) return;
+        function rolarCampoParaCentro(el, aoTerminar) {
+            if (!el || !el.getBoundingClientRect) {
+                if (aoTerminar) aoTerminar();
+                return;
+            }
             const rect = el.getBoundingClientRect();
             const meio = rect.top + window.pageYOffset - (window.innerHeight / 2) + (rect.height / 2);
             window.scrollTo({ top: Math.max(0, meio), behavior: 'smooth' });
+            if (!aoTerminar) return;
+
+            // aguarda a rolagem suave terminar para só então executar a ação (colocar o cursor)
+            let ultimo = window.pageYOffset, estavel = 0, quadros = 0;
+            const acompanhar = () => {
+                quadros++;
+                const atual = window.pageYOffset;
+                estavel = Math.abs(atual - ultimo) < 1 ? estavel + 1 : 0;
+                ultimo = atual;
+                if (estavel >= 8 || quadros > 90) aoTerminar();
+                else requestAnimationFrame(acompanhar);
+            };
+            requestAnimationFrame(acompanhar);
         }
 
         function focarNoCampo(el) {
@@ -891,10 +907,16 @@
             try { if (el.select && el.tagName !== 'SELECT') el.select(); } catch (_) {}
         }
 
+        // Chamada SOMENTE depois que o alerta fechou: rola o campo para o meio da tela e então coloca o cursor
+        function irParaCampoAposAlerta(alvo, campo) {
+            setTimeout(() => {
+                rolarCampoParaCentro(alvo, () => focarNoCampo(campo));
+            }, 120);
+        }
+
         function focarCampoInvalido(el) {
             el.classList.add('campo-invalido');
-            rolarCampoParaCentro(el);
-            setTimeout(() => { focarNoCampo(el); }, 80);
+            irParaCampoAposAlerta(el, el);
         }
 
         function validateForm() {
@@ -907,8 +929,10 @@
                     Swal.fire({
                         icon: 'warning',
                         title: 'CAMPO OBRIGATÓRIO',
-                        text: `PREENCHA O CAMPO: ${campo.label.toUpperCase()}`
-                    }).then(() => focarCampoInvalido(el));
+                        text: `PREENCHA O CAMPO: ${campo.label.toUpperCase()}`,
+                        returnFocus: false,
+                        didClose: () => focarCampoInvalido(el)
+                    });
                     return false;
                 }
             }
@@ -920,8 +944,10 @@
                 Swal.fire({
                     icon: 'warning',
                     title: 'CAMPO OBRIGATÓRIO',
-                    text: 'PREENCHA O CAMPO "OBS.", POIS "OUTRAS INFRAÇÕES" ESTÁ MARCADO'
-                }).then(() => focarCampoInvalido(inputObs));
+                    text: 'PREENCHA O CAMPO "OBS.", POIS "OUTRAS INFRAÇÕES" ESTÁ MARCADO',
+                    returnFocus: false,
+                    didClose: () => focarCampoInvalido(inputObs)
+                });
                 return false;
             }
 
@@ -934,19 +960,25 @@
                 Swal.fire({
                     icon: 'warning',
                     title: 'CAMPO OBRIGATÓRIO',
-                    text: 'MARQUE AO MENOS UMA INFRAÇÃO/TIPIFICAÇÃO'
-                }).then(() => {
-                    if (grupo) rolarCampoParaCentro(grupo);
-                    setTimeout(() => focarNoCampo(primeiroCheck), 80);
+                    text: 'MARQUE AO MENOS UMA INFRAÇÃO/TIPIFICAÇÃO',
+                    returnFocus: false,
+                    didClose: () => irParaCampoAposAlerta(grupo, primeiroCheck)
                 });
                 return false;
             }
 
             if (!signatures.FT1) {
+                const boxSig = document.getElementById('boxFT1');
+                if (boxSig) boxSig.classList.add('campo-invalido');
                 Swal.fire({
                     icon: 'warning',
                     title: 'ASSINATURA OBRIGATÓRIA',
-                    text: 'A ASSINATURA DO MEMBRO DA FORÇA-TAREFA 1 É OBRIGATÓRIA'
+                    text: 'A ASSINATURA DO MEMBRO DA FORÇA-TAREFA 1 É OBRIGATÓRIA',
+                    returnFocus: false,
+                    didClose: () => {
+                        irParaCampoAposAlerta(boxSig, null);
+                        setTimeout(() => { if (boxSig) boxSig.classList.remove('campo-invalido'); }, 2500);
+                    }
                 });
                 return false;
             }
