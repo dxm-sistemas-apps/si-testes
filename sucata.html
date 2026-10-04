@@ -6,6 +6,40 @@
   <title>CONTROLE DE SUCATAS</title>
   <script src="https://cdn.tailwindcss.com"></script>
   <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+  <!-- Alertas SweetAlert2 sempre centralizados na parte visível da tela -->
+  <script>
+  (function () {
+      if (typeof Swal === 'undefined') return;
+      const fireOriginal = Swal.fire.bind(Swal);
+      Swal.fire = function (...args) {
+          if (args.length && args[0] && typeof args[0] === 'object') {
+              args[0] = Object.assign({ position: 'center', heightAuto: false, scrollbarPadding: false }, args[0]);
+          }
+          return fireOriginal(...args);
+      };
+  })();
+  </script>
+  <style>
+      .swal2-container {
+          position: fixed !important;
+          top: 0 !important; right: 0 !important; bottom: 0 !important; left: 0 !important;
+          display: flex !important;
+          align-items: center !important;
+          justify-content: center !important;
+          padding: 12px !important;
+      }
+      .swal2-popup {
+          margin: auto !important;
+          max-height: 92vh;
+          max-height: 92dvh;
+          overflow-y: auto;
+      }
+      .swal2-html-container {
+          max-height: 55vh;
+          max-height: 55dvh;
+          overflow-y: auto;
+      }
+  </style>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.5.31/jspdf.plugin.autotable.min.js"></script>
   <style>
@@ -1597,7 +1631,7 @@
             return;
         }
         const rect = el.getBoundingClientRect();
-        const meio = rect.top + window.pageYOffset - (window.innerHeight * 0.5) + (rect.height / 2);
+        const meio = rect.top + window.pageYOffset - (window.innerHeight / 2) + (rect.height / 2);
         window.scrollTo({ top: Math.max(0, meio), behavior: 'smooth' });
         if (!aoTerminar) return;
 
