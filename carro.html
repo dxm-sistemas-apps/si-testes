@@ -743,7 +743,7 @@ function rolarCampoParaCentro(el, aoTerminar) {
         return;
     }
     const rect = el.getBoundingClientRect();
-    const meio = rect.top + window.pageYOffset - (window.innerHeight * 0.25) + (rect.height / 2);
+    const meio = rect.top + window.pageYOffset - (window.innerHeight * 0.5) + (rect.height / 2);
     window.scrollTo({ top: Math.max(0, meio), behavior: 'smooth' });
     if (!aoTerminar) return;
 
@@ -1532,7 +1532,7 @@ function salvarProgresso() {
 function limparTabela() {
     Swal.fire({
         title: 'TEM CERTEZA?',
-        html: "<span class='text-amber-500 font-bold'>ATENÇÃO:  </span> ISTO IRÁ <span class='text-red-500 font-bold'> 'APAGAR' TODOS OS DADOS DA PÁGINA </span>!",
+        html: "<span class='text-amber-500 font-bold'>ATENÇÃO:  </span> ISTO IRÁ <span class='text-red-500 font-bold'> 'APAGAR' TODOS OS DADOS DA PÁGINA</span>!",
         icon: 'question',
         showCancelButton: true,
         confirmButtonColor: '#d33',
