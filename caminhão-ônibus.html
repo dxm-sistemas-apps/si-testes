@@ -786,7 +786,7 @@ function rolarCampoParaCentro(el, aoTerminar) {
         return;
     }
     const rect = el.getBoundingClientRect();
-    const meio = rect.top + window.pageYOffset - (window.innerHeight / 2) + (rect.height / 2);
+    const meio = rect.top + window.pageYOffset - (window.innerHeight * 0.25) + (rect.height / 2);
     window.scrollTo({ top: Math.max(0, meio), behavior: 'smooth' });
     if (!aoTerminar) return;
 
