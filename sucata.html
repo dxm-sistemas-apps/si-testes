@@ -6,14 +6,54 @@
   <title>CONTROLE DE SUCATAS</title>
   <script src="https://cdn.tailwindcss.com"></script>
   <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
-  <!-- Alertas SweetAlert2 sempre centralizados na parte visível da tela -->
+  <!-- Alertas SweetAlert2 sempre centralizados e totalmente visíveis na parte visível da tela -->
   <script>
   (function () {
       if (typeof Swal === 'undefined') return;
+
+      // Mantém o contêiner do alerta exatamente sobre a área VISÍVEL (considera zoom, barra do navegador e teclado)
+      function ajustarAreaVisivel() {
+          const c = document.querySelector('.swal2-container');
+          const vv = window.visualViewport;
+          if (!c || !vv) return;
+          c.style.setProperty('top', vv.offsetTop + 'px', 'important');
+          c.style.setProperty('left', vv.offsetLeft + 'px', 'important');
+          c.style.setProperty('width', vv.width + 'px', 'important');
+          c.style.setProperty('height', vv.height + 'px', 'important');
+          c.style.setProperty('right', 'auto', 'important');
+          c.style.setProperty('bottom', 'auto', 'important');
+      }
+      function ativarAreaVisivel() {
+          ajustarAreaVisivel();
+          if (window.visualViewport) {
+              window.visualViewport.addEventListener('resize', ajustarAreaVisivel);
+              window.visualViewport.addEventListener('scroll', ajustarAreaVisivel);
+          }
+          window.addEventListener('resize', ajustarAreaVisivel);
+      }
+      function desativarAreaVisivel() {
+          if (window.visualViewport) {
+              window.visualViewport.removeEventListener('resize', ajustarAreaVisivel);
+              window.visualViewport.removeEventListener('scroll', ajustarAreaVisivel);
+          }
+          window.removeEventListener('resize', ajustarAreaVisivel);
+      }
+
       const fireOriginal = Swal.fire.bind(Swal);
       Swal.fire = function (...args) {
           if (args.length && args[0] && typeof args[0] === 'object') {
-              args[0] = Object.assign({ position: 'center', heightAuto: false, scrollbarPadding: false }, args[0]);
+              const opcoes = Object.assign({ position: 'center', heightAuto: false, scrollbarPadding: false }, args[0]);
+              const didOpenOriginal = opcoes.didOpen;
+              const didCloseOriginal = opcoes.didClose;
+              opcoes.didOpen = function (...a) {
+                  ativarAreaVisivel();
+                  if (typeof didOpenOriginal === 'function') return didOpenOriginal.apply(this, a);
+              };
+              opcoes.didClose = function (...a) {
+                  desativarAreaVisivel();
+                  if (typeof didCloseOriginal === 'function') return didCloseOriginal.apply(this, a);
+              };
+              args[0] = opcoes;
           }
           return fireOriginal(...args);
       };
@@ -26,13 +66,22 @@
           display: flex !important;
           align-items: center !important;
           justify-content: center !important;
+          box-sizing: border-box !important;
           padding: 12px !important;
+          overflow-y: auto !important;
       }
       .swal2-popup {
+          box-sizing: border-box !important;
           margin: auto !important;
-          max-height: 92vh;
-          max-height: 92dvh;
+          max-width: 100% !important;
+          max-height: calc(100vh - 24px);
+          max-height: calc(100dvh - 24px);
           overflow-y: auto;
+      }
+      .swal2-title,
+      .swal2-html-container {
+          overflow-wrap: anywhere;
+          word-break: break-word;
       }
       .swal2-html-container {
           max-height: 55vh;
@@ -2317,7 +2366,15 @@ function salvarRegistro() {
       });
     }
 
-    function limparTabela() {
+    function rolarParaTopoAposLimpar() {
+        window.scrollTo({ top: 0, behavior: 'smooth' });
+        // correção de segurança caso a rolagem suave seja interrompida pela mudança de layout
+        setTimeout(() => {
+            if (window.pageYOffset > 2) window.scrollTo({ top: 0, behavior: 'auto' });
+        }, 1200);
+    }
+
+        function limparTabela() {
       Swal.fire({
         title: 'TEM CERTEZA?',
         html: "<span style='color:#f59e0b; font-weight:bold;'>ATENÇÃO:  </span> ISTO IRÁ <span style='color:#dc2626; font-weight:bold;'> 'APAGAR' </span> TODOS OS DADOS DA PÁGINA!",
@@ -2326,9 +2383,17 @@ function salvarRegistro() {
         confirmButtonColor: '#d33',
         cancelButtonColor: '#000000',
         confirmButtonText: 'OK',
-        cancelButtonText: 'CANCELAR'
+        cancelButtonText: 'CANCELAR',
+        returnFocus: false,
+        didClose: () => {
+            if (window.foiConfirmadoLimpar) {
+                window.foiConfirmadoLimpar = false;
+                setTimeout(() => { rolarParaTopoAposLimpar(); }, 100);
+            }
+        }
       }).then((result) => {
         if (result.isConfirmed) {
+            window.foiConfirmadoLimpar = true;
           registros = [];
           localStorage.removeItem(STORAGE_KEYS.REGISTROS);
           renderRegistros();
@@ -2345,7 +2410,6 @@ function salvarRegistro() {
           resetFormState();
           loadFormDraft();
           
-          window.scrollTo({ top: 0, behavior: 'smooth' });
         }
       });
     }
