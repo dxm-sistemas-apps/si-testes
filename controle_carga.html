@@ -1365,7 +1365,7 @@
             const ctx = canvas.getContext('2d');
             ctx.drawImage(img, 0, 0, width, height);
 
-            const base64Resized = canvas.toDataURL('image/jpeg', 0.6);
+            const base64Resized = canvas.toDataURL('image/jpeg', 0.85);
             currentImages.push(base64Resized);
             
             processedCount++;
@@ -1879,7 +1879,7 @@
         function limparTabela() {
       Swal.fire({
         title: 'TEM CERTEZA?',
-        html: "<span style='color:#f59e0b; font-weight:bold;'>ATENÇÃO:  </span> ISTO IRÁ <span style='color:#dc2626; font-weight:bold;'> 'APAGAR' </span> TODOS OS DADOS DA PÁGINA E RELATÓRIOS PARCIAIS!",
+        html: "<span class='text-amber-500 font-bold'>ATENÇÃO:  </span> ISTO IRÁ <span class='text-red-500 font-bold'> 'APAGAR' TODOS OS CAMPOS PREENCHIDOS NA PÁGINA E O RELATÓRIO PARCIAL, SE HOUVER </span>!",
         icon: 'question',
         showCancelButton: true,
         confirmButtonColor: '#d33',
@@ -2296,7 +2296,7 @@
               Swal.fire({
                   icon: 'success',
                   title: 'PDF GERADO E COMPARTILHADO!',
-                  text: 'O arquivo foi adicionado ao histórico da página.',
+                  text: 'O ARQUIVO FOI ADICIONADO AO HISTÓRICO DA PÁGINA.',
                   confirmButtonColor: '#000000'
               }).then(() => {
                   limparAposGeracao();

@@ -669,7 +669,7 @@
       </div>
       <div class="form-group" id="grupo-fase-forca-tarefa" style="display: none;">
         <label for="header-fase-forca-tarefa">FASE DA FORÇA TAREFA: *</label>
-        <input type="text" id="header-fase-forca-tarefa" placeholder="FASE DA FORÇA TAREFA" oninput="this.value = this.value.toUpperCase()">
+        <input type="number" id="header-fase-forca-tarefa" placeholder="FASE DA FORÇA TAREFA" oninput="this.value = this.value.toUpperCase()">
       </div>
       <div class="form-group" id="grupo-estabelecimento" style="display: none;">
         <label for="header-estabelecimento">EMPRESA / ESTABELECIMENTO: *</label>
@@ -2094,7 +2094,7 @@
             const ctx = canvas.getContext('2d');
             ctx.drawImage(img, 0, 0, width, height);
 
-            const base64Resized = canvas.toDataURL('image/jpeg', 0.6);
+            const base64Resized = canvas.toDataURL('image/jpeg', 0.85);
             currentImages.push(base64Resized);
             
             processedCount++;
@@ -2377,7 +2377,7 @@ function salvarRegistro() {
         function limparTabela() {
       Swal.fire({
         title: 'TEM CERTEZA?',
-        html: "<span style='color:#f59e0b; font-weight:bold;'>ATENÇÃO:  </span> ISTO IRÁ <span style='color:#dc2626; font-weight:bold;'> 'APAGAR' </span> TODOS OS DADOS DA PÁGINA!",
+        html: "<span class='text-amber-500 font-bold'>ATENÇÃO:  </span> ISTO IRÁ <span class='text-red-500 font-bold'> 'APAGAR' TODOS OS CAMPOS PREENCHIDOS NA PÁGINA </span>!",
         icon: 'question',
         showCancelButton: true,
         confirmButtonColor: '#d33',
@@ -2741,7 +2741,7 @@ function salvarRegistro() {
                 pdf.setLineWidth(0.35);
                 pdf.rect(marginX, cardStartY, cardWidth, finalCardHeight, 'S');
 
-                curY += 4;
+                curY += 2;
             }
 
             const pdfBlob = pdf.output('blob');
@@ -2770,7 +2770,7 @@ function salvarRegistro() {
               Swal.fire({
                   icon: 'success',
                   title: 'PDF GERADO E COMPARTILHADO!',
-                  text: 'O arquivo foi adicionado ao histórico da página.',
+                  text: 'O ARQUIVO FOI ADICIONADO AO HISTÓRICO DA PÁGINA.',
                   confirmButtonColor: '#000000'
               }).then(() => {
                   limparAposGeracao();

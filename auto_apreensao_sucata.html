@@ -936,7 +936,7 @@
                 function confirmClearAllForm() {
             Swal.fire({
                 title: 'TEM CERTEZA?',
-                html: "<span class='text-amber-500 font-bold'>ATENÇÃO:</span> ISTO IRÁ <span class='text-red-600 font-bold'>APAGAR</span> TODOS OS DADOS DA TELA!",
+                html: "<span class='text-amber-500 font-bold'>ATENÇÃO:  </span> ISTO IRÁ <span class='text-red-500 font-bold'> 'APAGAR' TODOS OS CAMPOS PREENCHIDOS NA PÁGINA </span>!",
                 icon: 'question',
                 showCancelButton: true,
                 confirmButtonColor: '#d33',
@@ -1228,7 +1228,7 @@
                     await navigator.share({
                         files: [arquivo],
                         title: nomeArquivo,
-                        text: 'PDF gerado pelo Sistema Integrado DETRAN/RJ.'
+                        text: 'PDF GERADO PELO SISTEMA INTEGRADO DETRAN.RJ!'
                     });
                 } else {
                     await Swal.fire({
